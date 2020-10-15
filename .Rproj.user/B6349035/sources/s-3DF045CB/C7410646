@@ -1,0 +1,26 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1602674782290.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "C7410646",
+    "lastKnownWriteTime" : 1602775038,
+    "last_content_update" : 1602775038826,
+    "path" : "~/Syracuse/IST687-IntroDataScience/FlightSurveyProject/FlightMapping.R",
+    "project_path" : "FlightMapping.R",
+    "properties" : {
+        "cursorPosition" : "144,63",
+        "scrollLine" : "121",
+        "tempName" : "Untitled1"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 1,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
