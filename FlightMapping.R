@@ -1,27 +1,10 @@
-# Exploratory Data Analysis
+# Create a map of the flight routes in our dataset
 library(tidyverse)
 library(ggmap)
-# use gdata to read in the .xls file of customer survey data
 library(readxl)
+
+# read the data file in as a dataframe
 data <- read_xlsx("./data/Satisfaction Survey(2).xlsx")
-
-str(data)
-
-summary(data)
-
-# view the data
-head(data)
-tail(data)
-View(data)
-
-# Find the amount of null values in each column
-sapply(data, function(x) sum(is.na(x)))
-
-# Find the amount of null values in each column using dplyr
-data %>%
-  select(everything()) %>%
-  summarise_all(funs(sum(is.na(.)))) %>%
-  transpose()
 
 
 # ----------------------------------------------------------------------------------------
@@ -42,7 +25,7 @@ unqOrigins <- unique(data$OriginCityState)
 unqDests <- unique(data$DestinationCityState)
 
 # Get a dataframe of lat and lon for the unique origins
-OriginLatLon <- geocode(unqOrigins)
+# OriginLatLon <- geocode(unqOrigins)
 sapply(OriginLatLon, function(x) sum(is.na(x))) # There is one NA, and based on log of geocode calls.. It's Guam
 
 # Rplace te one NA with Guam's lon and lat
@@ -53,7 +36,8 @@ colnames(OriginLatLon) <- c("Orig_lon", "Orig_lat")
 # combine the locations with the Origin name
 OriginLatLon <- cbind(OriginLatLon, unqOrigins)
 
-DestLatLon <- geocode(unqDests)
+# Comment out the geocode requests to not make api calls
+# DestLatLon <- geocode(unqDests)
 sapply(DestLatLon, function(x) sum(is.na(x))) # Based on geocode logs, Guam is once again the only NA, luckily we have
 # Replace the one NA with Guam's lon and lat
 DestLatLon$lon <- ifelse(is.na(DestLatLon$lon), guam$lon, DestLatLon$lon)
@@ -87,31 +71,31 @@ library(maptools)
 library(geosphere)
 library(plyr)
 
-#
-# Plot the routes https://weiminwang.blog/2015/06/24/use-r-to-plot-flight-routes-on-a-fancy-world-background/
-# 
+# ----------------------------------------------------------------------------------------
+# Plot the routes via code provided by the below link:
+# https://weiminwang.blog/2015/06/24/use-r-to-plot-flight-routes-on-a-fancy-world-background/
+# ----------------------------------------------------------------------------------------
 
 fortify.SpatialLinesDataFrame = function(model, data, ...){
   ldply(model@lines, fortify)
 }
 
-
-
-tapply(data$Satisfaction, list(data$OriginCityState, data$DestinationCityState), n)
-
+# get the count of each route
 dat_grp <- data %>% 
   dplyr::group_by(OriginCityState, DestinationCityState) %>%
   dplyr::summarise(
     count = dplyr::n()
   )
-  
+
+# merge to bring the lat and lon into the data
 dat_grp <- merge(dat_grp, OriginLatLon, by.x="OriginCityState", by.y="unqOrigins", all.x=TRUE)
 dat_grp <- merge(dat_grp, DestLatLon, by.x="DestinationCityState", by.y="unqDests", all.x=TRUE)
 dat_grp = subset(dat_grp, select=-c(`X.x`, `X.y`))
 
-sum(dat_grp$count)
+# Check that the count matches the total rows in the data 
+sum(dat_grp$count) == nrow(data)
 head(dat_grp)
-
+# check for any NAs
 sapply(dat_grp, function(x) sum(is.na(x)))
 
 # calculate routes for each row
