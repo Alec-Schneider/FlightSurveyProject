@@ -4,10 +4,17 @@ library(readxl)
 
 # read the data file in as a dataframe
 data <- read_xlsx("./data/Satisfaction Survey(2).xlsx")
+
+
+# ----------------------------------------------------------------------------------
+# Data Cleaning 
+# ----------------------------------------------------------------------------------
 # remove all spaces from the column names as this may cause a problem later on
 for (i in 1:length(colnames(data))){
   colnames(data)[i] <- gsub(" ", "_", colnames(data)[i])
 }
+
+numeric_cols <- unlist(lapply(data, is.numeric))
 
 # Find the amount of null values in each column
 sapply(data, function(x) sum(is.na(x)))
@@ -67,6 +74,10 @@ View(data %>%
 # drop the 337 flights where the flight was not cancelled, and Arrival Delay in Minutes is NA.
 data <- data[!((data$Flight_cancelled == "No") & is.na(data$Arrival_Delay_in_Minutes)),]
 
+
+# ----------------------------------------------------------------------------------
+# EDA Through Visualization With ggplot2
+# ----------------------------------------------------------------------------------
 # Look at the mean Satisfaction score by Airline
 airline_mean <- data.frame(mean_satisfaction = with(data ,tapply(data$Satisfaction, data$Airline_Name, mean)))
 airline_mean$Airline_Name <- rownames(airline_mean)
@@ -75,6 +86,7 @@ airline_mean$mean_satisfaction <- round(airline_mean$mean_satisfaction, 3)
 
 airline_mean <- airline_mean[order(-airline_mean$mean_satisfaction),]
 rownames(airline_mean) <- NULL
+
 # plot the means in a bar chart
 ggplot(airline_mean, aes(x=Airline_Name, y=mean_satisfaction, fill=mean_satisfaction, label=mean_satisfaction)) +
   geom_col() +
@@ -117,6 +129,39 @@ ggplot(data, aes(x=Type_of_Travel)) +
   ggtitle("Count of Travel Types") +
 ggsave("./images/TravelTypeCount.png")
 
+# Distribution of Satisfaction Score by Travel Type
+ggplot(data, aes(x=Satisfaction, color=Type_of_Travel)) +
+  geom_freqpoly(binwidth=0.1) +
+  ggtitle("Distribution of Satisfaction Scores by Travel Type")
+ggsave("./images/SatisfactionScoresByTravelType.png")
 
-ggplot(data, aes(y=Age, x=Satisfaction)) +
-  geom_point()
+# Distribution of price sensitivity by Age
+ggplot(data, aes(x=Age, color=as.factor(Price_Sensitivity))) +
+  geom_freqpoly(binwidth=1, aes(y=stat(count) /sum(count))) +
+  scale_y_continuous() +
+  labs(color="Sensitivity") +
+  ylab("Relative Frequency") +
+  ylim(-.0005, .02) +
+  ggtitle("Relative frequency of Price Sensitivty by Age")
+ggsave("./images/RelFreqPriceSensitivityByAge.png")
+
+# Count of Price Sensitivites by Gender
+ggplot(data, aes(x=Gender, fill=as.factor(Price_Sensitivity))) +
+  geom_bar() +
+  labs(color="Sensitivity") +
+  ggtitle("Count of Price Sensitivty by Gender")
+ggsave("./images/PriceSensitiviesGender.png")
+
+# heatmap of correlations between numeric variables
+library(reshape2)
+# Get a correlation matrix, but remove the NAs before analyzing
+corr_matrix <- round(cor(na.omit(data[, numeric_cols])),2)
+melted_corr <- melt(corr_matrix) # melt the matrix to be used in ggplot
+# plot the melted correlation matrix with viridis scale coloring
+ggplot(melted_corr, aes(x=Var1, y=Var2, fill=value, label=value)) +
+  geom_tile() +
+  geom_text(color="white", size=3) +
+  ggtitle("Correlation Matrix of Numeric Variables") +
+  scale_fill_viridis_c() +
+  theme(axis.text.x=element_text(angle=90))
+ggsave("./images/CorrelationMatrix.png")
