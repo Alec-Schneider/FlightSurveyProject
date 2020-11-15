@@ -241,7 +241,12 @@ data %>%
   group_by(No._of_other_Loyalty_Cards) %>%
   summarise(count=n())
 
-data %>%
-  mutate(cut(No._of_other_Loyalty_Cards, ))
+# Create categories for the Numbe of loyalty cards a customer has
+data <- data %>%
+  mutate(cat_loyalty_cards=cut(No._of_other_Loyalty_Cards, 
+                               breaks=c(-Inf, 0, 3, 6, 12), 
+                               labels=c("None", "Low", "Medium", "High")))
+
+
 
 write.csv(data, file='./data/cleaned_data.csv')
