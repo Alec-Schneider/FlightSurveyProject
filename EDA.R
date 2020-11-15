@@ -14,6 +14,9 @@ for (i in 1:length(colnames(data))){
   colnames(data)[i] <- gsub(" ", "_", colnames(data)[i])
 }
 
+# fix the origin city misspell
+data <- rename(data, Origin_City=Orgin_City)
+
 numeric_cols <- unlist(lapply(data, is.numeric))
 
 # Find the amount of null values in each column
@@ -74,6 +77,11 @@ View(data %>%
 # drop the 337 flights where the flight was not cancelled, and Arrival Delay in Minutes is NA.
 data <- data[!((data$Flight_cancelled == "No") & is.na(data$Arrival_Delay_in_Minutes)),]
 
+# Create columns for Departure Delay and Arrival Delay as a percent of Flight Time
+data <- data %>%
+  mutate(DepDelayRatio =(Departure_Delay_in_Minutes / Flight_time_in_minutes),
+         ArrDelayRatio =(Arrival_Delay_in_Minutes / Flight_time_in_minutes))
+
 
 # ----------------------------------------------------------------------------------
 # EDA Through Visualization With ggplot2
@@ -91,9 +99,10 @@ rownames(airline_mean) <- NULL
 ggplot(airline_mean, aes(x=Airline_Name, y=mean_satisfaction, fill=mean_satisfaction, label=mean_satisfaction)) +
   geom_col() +
   geom_text(nudge_y=.3) +
-  theme(axis.text.x = element_text(angle=90), legend.position = "None") +
-  ylim(0, 5) +
-  ggtitle("Average Satisfaction Score by Airline")
+  theme(legend.position = "None") +
+  ylim(0, 4) +
+  ggtitle("Average Satisfaction Score by Airline") +
+  coord_flip()
 ggsave("./images/SatisfactionByAirline.png")
 
 
@@ -101,8 +110,9 @@ ggsave("./images/SatisfactionByAirline.png")
 # Distribution of the age of passengers
 ggplot(data, aes(x=Age)) +
   geom_histogram(binwidth=4, fill="darkred", color="white") +
-  ggtitle("Distribution of Passneger Ages")
+  ggtitle("Distribution of Passenger Ages")
 ggsave("./images/AgeDistribution.png")
+
 
 # Count of Genders
 ggplot(data, aes(x=Gender)) +
@@ -123,17 +133,24 @@ ggplot(data, aes(x=Satisfaction, color=Gender)) +
   ggtitle("Density Plot of Satisfaction Scores By Gender")
 ggsave("./images/SatisfactionGenderDensity.png")
 
+
 # Different Travel Types
 ggplot(data, aes(x=Type_of_Travel)) +
   geom_bar() +
   ggtitle("Count of Travel Types") +
 ggsave("./images/TravelTypeCount.png")
 
+
 # Distribution of Satisfaction Score by Travel Type
 ggplot(data, aes(x=Satisfaction, color=Type_of_Travel)) +
   geom_freqpoly(binwidth=0.1) +
   ggtitle("Distribution of Satisfaction Scores by Travel Type")
 ggsave("./images/SatisfactionScoresByTravelType.png")
+
+#
+ggplot(data, aes(x=Type_of_Travel, y=Satisfaction)) +
+  geom_boxplot()
+ggsave("./images/SatisfactionByTravelDistribution")
 
 # Distribution of price sensitivity by Age
 ggplot(data, aes(x=Age, color=as.factor(Price_Sensitivity))) +
@@ -145,12 +162,15 @@ ggplot(data, aes(x=Age, color=as.factor(Price_Sensitivity))) +
   ggtitle("Relative frequency of Price Sensitivty by Age")
 ggsave("./images/RelFreqPriceSensitivityByAge.png")
 
+
 # Count of Price Sensitivites by Gender
 ggplot(data, aes(x=Gender, fill=as.factor(Price_Sensitivity))) +
   geom_bar() +
   labs(color="Sensitivity") +
-  ggtitle("Count of Price Sensitivty by Gender")
+  ggtitle("Count of Price Sensitivty by Gender") +
+  labs(fill="Sensitivity")
 ggsave("./images/PriceSensitiviesGender.png")
+
 
 # heatmap of correlations between numeric variables
 library(reshape2)
@@ -165,3 +185,63 @@ ggplot(melted_corr, aes(x=Var1, y=Var2, fill=value, label=value)) +
   scale_fill_viridis_c() +
   theme(axis.text.x=element_text(angle=90))
 ggsave("./images/CorrelationMatrix.png")
+
+
+# ----------------------------------------------------------------------------------
+# EDA - Summaries
+# ----------------------------------------------------------------------------------
+# Find the counts and relative frequency of all 
+dest_group <- data %>%
+  group_by(Destination_City) %>%
+  summarise(count=n()) %>%
+  arrange(desc(count))
+
+dest_group <- dest_group %>%
+  mutate(rel_freq= count / sum(count))
+
+tail(dest_group, 10)
+
+route_group <- data %>%
+  group_by(Origin_City, Destination_City) %>%
+  summarise(count=n(),
+            avg_delay=mean(Departure_Delay_in_Minutes, na.rm=TRUE),
+            avg_flight_time=mean(Flight_time_in_minutes, na.rm=TRUE),
+            num_cancellations=sum(ifelse(Flight_cancelled == "Yes", 1, 0))
+            )
+
+route_group <- route_group %>%
+  mutate(cancellation_freq= num_cancellations/count)
+
+route_group %>%
+  arrange(desc(num_cancellations))
+
+route_group %>%
+  filter(count > 10) %>%
+  arrange(desc(cancellation_freq))
+
+# group by airline name and look at average delay, flight, and cancellations
+airline_group <- data %>%
+  group_by(Airline_Name) %>%
+  summarise(count=n(),
+            avg_delay=mean(Departure_Delay_in_Minutes, na.rm=TRUE),
+            avg_flight_time=mean(Flight_time_in_minutes, na.rm=TRUE),
+            num_cancellations=sum(ifelse(Flight_cancelled == "Yes", 1, 0)),
+            cancellation_freq= num_cancellations/count
+            )
+airline_group
+
+
+# ----------------------------------------------------------------------------------
+# Data Transformation
+# ----------------------------------------------------------------------------------
+ggplot(data, aes(x=No._of_other_Loyalty_Cards)) +
+  geom_bar()
+
+data %>%
+  group_by(No._of_other_Loyalty_Cards) %>%
+  summarise(count=n())
+
+data %>%
+  mutate(cut(No._of_other_Loyalty_Cards, ))
+
+write.csv(data, file='./data/cleaned_data.csv')
