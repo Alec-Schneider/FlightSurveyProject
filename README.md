@@ -4,3 +4,7 @@
 ### Goals
 - Generate actionable insight from the flight survey dataset
 - Predict customers with low satisfaction
+
+
+### Descriptons of R Scripts
+#
