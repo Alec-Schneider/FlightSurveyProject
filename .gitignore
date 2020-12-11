@@ -2,3 +2,5 @@
 .Rhistory
 .RData
 .Ruserdata
+./data
+./ne_10m_urban_areas

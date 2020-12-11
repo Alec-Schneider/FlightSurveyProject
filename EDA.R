@@ -234,6 +234,11 @@ airline_group
 # ----------------------------------------------------------------------------------
 # Data Transformation
 # ----------------------------------------------------------------------------------
+####
+# Converting numeric variables to categorical variables
+####
+
+# Start with the No. of other_loyalty cards
 ggplot(data, aes(x=No._of_other_Loyalty_Cards)) +
   geom_bar()
 
@@ -248,5 +253,71 @@ data <- data %>%
                                labels=c("None", "Low", "Medium", "High")))
 
 
+# 	%_of_Flight_with_other_Airlines 
+ggplot(data, aes(x=`%_of_Flight_with_other_Airlines`)) +
+  geom_histogram()
 
-write.csv(data, file='./data/cleaned_data.csv')
+data %>%
+  group_by(`%_of_Flight_with_other_Airlines`) %>%
+  summarise(count=n())
+
+# Cut into thirds
+xs <- quantile(data$`%_of_Flight_with_other_Airlines`, c(0, 1/3, 2/3, 1))
+
+data <- data %>%
+  mutate(`cat_%_of_FLight_with_other`=cut(`%_of_Flight_with_other_Airlines`, 
+                               breaks=xs, 
+                               labels=c("Low", "Medium", "High"))) 
+
+
+# No._of_flights_p.a.
+ggplot(data, aes(x=No_of_Flights_p.a.)) +
+  geom_histogram()
+
+# Cut into thirds
+xs <- quantile(data$No_of_Flights_p.a., c(0, 1/3, 2/3, 1))
+
+data <- data %>%
+  mutate(cat_No_of_Flights=cut(No_of_Flights_p.a., 
+                                          breaks=xs, 
+                                          labels=c("Low", "Medium", "High"))) 
+
+
+# Age
+ggplot(data, aes(x=Age)) +
+  geom_histogram()
+
+data <- data %>%
+  mutate(cat_Age=cut(Age,
+                     breaks=c(-Inf, 20, 30, 40, 50, 60, 70, Inf), 
+                     ))
+
+
+####
+# Creating Dummy Variables for the categorical variables
+####
+library(caret)
+
+# use a for loop to one hot encode all the 
+# Will need to manuall do cat_%_of_FLight_with_other do to the % sign being an issue
+dummy_cols <- c("Airline_Status", "Type_of_Travel", "Class", "cat_loyalty_cards",
+                "cat_No_of_Flights", "cat_Age")
+
+dummy_df <- data.frame()
+for (col in dummy_cols){
+  dmy <- dummyVars(paste("~", col, sep = " ") , data=data)
+  if (dim(dummy_df)[1] != 0){ 
+    # need to return n-1 values of the categorical variable for analysis
+    dummy_df <- cbind(dummy_df, data.frame(predict(dmy, newdata = data))[,-1])
+  } else {
+    dummy_df <- data.frame(predict(dmy, newdata = data))[,-1]
+  }
+}
+  
+
+dmy <- dummyVars(~ `cat_%_of_FLight_with_other`, data=data)
+dummy_df <- cbind(dummy_df, data.frame(predict(dmy, newdata = data))[,-1])
+
+data <- cbind(data, dummy_df)
+
+# write.csv(data, file='./data/cleaned_data.csv', row.names = FALSE)
