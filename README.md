@@ -5,6 +5,8 @@
 - Generate actionable insight from the flight survey dataset.
 - Predict customers with low satisfaction.
 
+![Flight Map](./images/flightmap.png)
+
 
 ### Descriptons of R Scripts
 #### Data Cleaning, Transformation, Munging
