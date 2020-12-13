@@ -42,7 +42,7 @@ fillNAs <- function(data){
 
 
 category_processing <- function(data){
-  # Create categories for the Numbe of loyalty cards a customer has
+  # Create categories for the Number of loyalty cards a customer has
   data <- data %>%
     mutate(cat_loyalty_cards=cut(No._of_other_Loyalty_Cards, 
                                  breaks=c(-Inf, 0, 3, 6, 12), 

@@ -12,9 +12,6 @@ sapply(model_data, function(x) sum(is.na(x)))
 
 # set the seed so we can compare our results on the same splits
 set.seed(11)
-
-
-
 # split the data into training and test data
 split = sample.split(model_data$Satisfaction, SplitRatio=.8)
 training = subset(model_data, split == TRUE)
@@ -52,12 +49,20 @@ lm2.summary <- summary(lm2)
 lm2.summary
 lm2_preds <- predict(lm2, test)
 
+
 lm_rmse <- rmse(test$Satisfaction, lm2_preds)
+
+lm2_df <- data.frame(test$Satisfaction, lm2_preds)
+lm2_df$errors <- lm2_df$test.Satisfaction - lm2_df$lm2_preds
+
+hist(lm2_df$errors)
+
 lm_test2 <- model_trainer(xs=usable_x_cols,
               y=y,
               model=lm,
-              train=train,
+              train=training,
               test=test,
               type="regression")
+
 
 lm_test2$score

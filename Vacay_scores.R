@@ -1,7 +1,9 @@
 # Vacation Destinations 
 library(tidyverse)
+source("./DataCleaning.R")
 
-df <- read.csv('./data/cleaned_data.csv')
+df <- read_xlsx("./data/Satisfaction Survey(2).xlsx")
+df <- process_flight_survey(df)
 
 head(df)
 

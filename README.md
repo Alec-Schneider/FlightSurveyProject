@@ -11,28 +11,28 @@
 ### Descriptons of R Scripts
 #### Data Cleaning, Transformation, Munging
 DataCleaning.R
-  Functions to be used to clean the Flight Survet dataset.
+   Functions to be used to clean the Flight Survet dataset.
 
 
 #### Exploratory Data Analysis
 EDA.R
 
 
-FlightMapping.R
+FlightMapping.R  
   Creates a world map of all flight patterns in the dataset.
 
 Vacay_scores.R
   
 
 #### Modeling
-ModelgFuncs.R
+ModelgFuncs.R  
   Contains the model_trainer function that trains a model, predicts the results on the test data, and scores the model.
 
-XGBoostModeling.R
+XGBoostModeling.R  
   Script for training, evaluating, and scoring gradient boosting trees to understand important features in the data and build a good prediction model.
 
-SVMModeling.R
+SVMModeling.R  
   Training Support Vector Machine classification models.
 
-NaiveBayesModeling.R
+NaiveBayesModeling.R  
   Training Naive Bayes classification models.  

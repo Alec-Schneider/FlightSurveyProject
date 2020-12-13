@@ -117,7 +117,7 @@ ggsave("./images/AgeDistribution.png")
 # Count of Genders
 ggplot(data, aes(x=Gender)) +
   geom_bar(fill="darkblue", color="white") +
-  ggtitle("Count of a Passenger's Gender")
+  ggtitle("Count By Gender")
 ggsave("./images/GenderCount.png")
 
 # Create a density plot of the satisfaction score by gender
@@ -132,6 +132,22 @@ ggplot(data, aes(x=Satisfaction, color=Gender)) +
              linetype="dashed") +
   ggtitle("Density Plot of Satisfaction Scores By Gender")
 ggsave("./images/SatisfactionGenderDensity.png")
+
+
+avg_gender_ps <- data %>%
+  group_by(Gender) %>%
+  summarise(mean_score = mean(Price_Sensitivity))
+
+
+ggplot(data, aes(x=Price_Sensitivity, color=Gender)) +
+  geom_density() +
+  geom_vline(data=avg_gender_ps, aes(xintercept=mean_score, color=Gender),
+             linetype="dashed") +
+  ggtitle("Density Plot of Price Sensitivity By Gender")
+ggsave("./images/PriceSensitivityGenderDensity.png")
+
+
+
 
 
 # Different Travel Types
@@ -207,6 +223,7 @@ route_group <- data %>%
             avg_delay=mean(Departure_Delay_in_Minutes, na.rm=TRUE),
             avg_flight_time=mean(Flight_time_in_minutes, na.rm=TRUE),
             num_cancellations=sum(ifelse(Flight_cancelled == "Yes", 1, 0))
+            
             )
 
 route_group <- route_group %>%
@@ -223,13 +240,39 @@ route_group %>%
 airline_group <- data %>%
   group_by(Airline_Name) %>%
   summarise(count=n(),
+            avg_satisfaction=mean(Satisfaction, na.rm=TRUE),
             avg_delay=mean(Departure_Delay_in_Minutes, na.rm=TRUE),
             avg_flight_time=mean(Flight_time_in_minutes, na.rm=TRUE),
             num_cancellations=sum(ifelse(Flight_cancelled == "Yes", 1, 0)),
+            delay_freq=sum(na.omit(Departure_Delay_in_Minutes) > 0) / count,
             cancellation_freq= num_cancellations/count
             )
 airline_group
 
+airline_group %>%
+  arrange(desc(delay_freq))
+
+
+airline_group %>%
+  arrange(desc(cancellation_freq))
+
+#### Origin city cancellations and delays
+origin_group <- data %>%
+  group_by(Origin_City) %>%
+  summarise(count=n(),
+            avg_satisfaction=mean(Satisfaction, na.rm=TRUE),
+            avg_delay=mean(Departure_Delay_in_Minutes, na.rm=TRUE),
+            avg_flight_time=mean(Flight_time_in_minutes, na.rm=TRUE),
+            num_cancellations=sum(ifelse(Flight_cancelled == "Yes", 1, 0)),
+            delay_freq=sum(na.omit(Departure_Delay_in_Minutes) > 0) / count,
+            cancellation_freq= num_cancellations/count
+  )
+
+origin_group %>%
+  arrange(desc(delay_freq))
+
+origin_group %>%
+  arrange(desc(cancellation_freq))
 
 # ----------------------------------------------------------------------------------
 # Data Transformation
